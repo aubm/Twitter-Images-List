@@ -1,0 +1,7 @@
+module: images-api
+runtime: go
+api_version: 1
+
+handlers:
+- url: /.*
+  script: _go_app
