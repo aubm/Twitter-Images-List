@@ -23,6 +23,7 @@ type ImagesHandlers struct {
 
 func (h *ImagesHandlers) List(w http.ResponseWriter, r *http.Request) {
 	ctx := h.Ctx.New(r)
+
 	imagesList, err := h.Finder.Find(ctx, images.FindOptions{
 		Limit:      100,
 		Offset:     0,
@@ -62,8 +63,8 @@ func (h *ImagesHandlers) Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ImagesHandlers) validateIndexRequest(indexRequest images.IndexRequest) error {
-	if indexRequest.Url == "" && indexRequest.GsUrl == "" {
-		return errors.New(`You must specify at least one of the properties: "url", "gsUrl"`)
+	if indexRequest.Url == "" {
+		return errors.New(`Missing "url" property`)
 	}
 	return nil
 }

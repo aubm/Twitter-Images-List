@@ -10,7 +10,6 @@ const (
 type Image struct {
 	ID          string    `datastore:"id" json:"id"`
 	Url         string    `datastore:"url,noindex" json:"url"`
-	GsUrl       string    `datastore:"gs_url,noindex" json:"gs_url"`
 	Description string    `datastore:"description,noindex" json:"description"`
 	Tags        []string  `datastore:"tags,noindex" json:"tags"`
 	CreatedAt   time.Time `datastore:"created_at,noindex" json:"created_at"`

@@ -1,6 +1,6 @@
 module: images-api
 runtime: go
-api_version: 1
+api_version: go1
 
 handlers:
 - url: /.*

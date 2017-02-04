@@ -17,9 +17,13 @@ func init() {
 	imagesIndexer := &images.Indexer{}
 	context := &api.ContextProvider{}
 	logger := &shared.Logger{}
+	httpClientProvider := &shared.HttpClientProvider{}
+	configurationLoader := &shared.ConfigurationLoader{}
+	storage := &shared.StorageService{}
 
 	if err := inject.Populate(
-		imagesHandlers, context, imagesFinder, imagesIndexer, logger,
+		imagesHandlers, context, imagesFinder, imagesIndexer, logger, httpClientProvider,
+		configurationLoader, storage,
 	); err != nil {
 		panic(fmt.Errorf("Failed to populate application graph: %v", err))
 	}

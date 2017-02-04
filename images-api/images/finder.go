@@ -19,7 +19,7 @@ func (f *Finder) Find(ctx context.Context, options FindOptions) (*FindResult, er
 		return nil, fmt.Errorf("Failed to perform the search operation: %v", err)
 	}
 
-	keys, err := f.extractKeysFromIterator(it)
+	keys, err := f.extractKeysFromIterator(ctx, it)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to extract datastore keys from search result: %v", err)
 	}
@@ -53,7 +53,7 @@ func (f *Finder) performSearch(ctx context.Context, options FindOptions) (*searc
 	}), nil
 }
 
-func (f *Finder) extractKeysFromIterator(it *search.Iterator) ([]*datastore.Key, error) {
+func (f *Finder) extractKeysFromIterator(ctx context.Context, it *search.Iterator) ([]*datastore.Key, error) {
 	keys := []*datastore.Key{}
 	for {
 		id, err := it.Next(nil)
@@ -63,7 +63,7 @@ func (f *Finder) extractKeysFromIterator(it *search.Iterator) ([]*datastore.Key,
 			}
 			return nil, fmt.Errorf("Failed to read next search entry: %v", err)
 		}
-		keys = append(keys, buildKeyForImageID(id))
+		keys = append(keys, buildKeyForImageID(ctx, id))
 	}
 	return keys, nil
 }
@@ -71,7 +71,7 @@ func (f *Finder) extractKeysFromIterator(it *search.Iterator) ([]*datastore.Key,
 func (f *Finder) getImagesListFromDatastore(ctx context.Context, keys []*datastore.Key) ([]Image, error) {
 	imagesList := make([]Image, len(keys))
 	if err := datastore.GetMulti(ctx, keys, imagesList); err != nil {
-		return nil, fmt.Errof("Failed to get multiple keys from datastore: %v", err)
+		return nil, fmt.Errorf("Failed to get multiple keys from datastore: %v", err)
 	}
 	return imagesList, nil
 }
