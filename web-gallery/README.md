@@ -1,0 +1,1 @@
+Start the server on port 8080 then go to `http://localhost:8080#<searchEndPoint>`

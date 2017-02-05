@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Web gallery</title>
+  <link rel="stylesheet" href="css/shuffle.css">
+  <link rel="stylesheet" href="css/shuffle-styles.css">
+  <link rel="stylesheet" href="libs/font-awesome/font-awesome.min.css">
+  <script src="libs/shuffle/shuffle.min.js" type="application/javascript"></script>
+  <script src="libs/mustache/mustache.min.js" type="application/javascript"></script>
+  <script src="libs/jquery/jquery.min.js" type="application/javascript"></script>
+</head>
+<body>
+<script type="text/html" id="image-template" style="display:none;">
+  <figure class="col-4@sm picture-item" data-date-created="{{created_at}}">
+    <div class="aspect aspect--16x9">
+      <div class="aspect__inner">
+        <img src="{{{url}}}">
+      </div>
+    </div>
+    <figcaption>{{description}}</figcaption>
+  </figure>
+</script>
+<nav id="main-nav">
+  <div class="inline-block">
+    <button id="fetch-button" onclick="fetchImages()">
+      Load more images
+    </button>
+    <i id="loading-indicator" style="display:none;" class="fa fa-spinner fa-spin fa-2x fa-fw"></i>
+  </div>
+  <div class="inline-block" id="filter-tags">
+    <input type="text" placeholder="Filter tags">
+  </div>
+</nav>
+<div id="grid" class="row my-shuffle-container">
+  <div class="col-1@sm my-sizer-element"></div>
+</div>
+<script type="application/javascript">
+  var searchEndPoint = window.location.hash.substr(1);
+  var numberOfImagesPerRequest = 20;
+  var currentOffset = 0;
+  var filterTags = '';
+
+  var Shuffle = window.shuffle;
+  var gridElement = document.getElementById('grid');
+  var sizer = gridElement.querySelector('.my-sizer-element');
+  var $loader = $('#loading-indicator');
+
+  var shuffle = new Shuffle(gridElement, {
+    itemSelector: '.picture-item',
+    sizer: sizer // could also be a selector: '.my-sizer-element'
+  });
+
+  var imageTemplate = document.querySelector('#image-template').innerText;
+  Mustache.parse(imageTemplate);
+
+  fetchImages();
+
+  $('#filter-tags').on('input', debounce(function (e) {
+    filterTags = e.target.value;
+    currentOffset = 0;
+    clearAllImages();
+    fetchImages();
+  }, 600));
+
+  function fetchImages() {
+    $loader.show();
+    fetch(buildUrlToFetch())
+        .then(function (response) {
+          return response.json();
+        })
+        .then(function (responseData) {
+          var imagesToAdd = [];
+          responseData.items.forEach(function (image) {
+            var imageHTML = Mustache.render(imageTemplate, image);
+            var imageElement = $(imageHTML)[0];
+            gridElement.insertBefore(imageElement, sizer);
+            imagesToAdd.push(imageElement);
+          });
+          return imagesToAdd;
+        })
+        .then(function (imagesToAdd) {
+          shuffle.add(imagesToAdd);
+          $loader.hide();
+        });
+  }
+
+  function buildUrlToFetch() {
+    var url = searchEndPoint + '?limit=' + numberOfImagesPerRequest + '&offset=' + currentOffset + '&tags=' + filterTags;
+    currentOffset += numberOfImagesPerRequest;
+    return url;
+  }
+
+  function clearAllImages() {
+    while (gridElement.firstChild) {
+      if (gridElement.firstElementChild === sizer) {
+        break;
+      }
+      gridElement.removeChild(gridElement.firstChild);
+    }
+    shuffle.update();
+  }
+
+  function debounce(func, wait, immediate) {
+    var timeout;
+    return function () {
+      var context = this, args = arguments;
+      var later = function () {
+        timeout = null;
+        if (!immediate) func.apply(context, args);
+      };
+      var callNow = immediate && !timeout;
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+      if (callNow) func.apply(context, args);
+    };
+  }
+  ;
+</script>
+</body>
+</html>
