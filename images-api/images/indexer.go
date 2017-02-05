@@ -7,18 +7,18 @@ import (
 	"strings"
 	"time"
 
+	"cloud.google.com/go/vision"
+	"github.com/aubm/twitter-image/images-api/shared"
 	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
+	"google.golang.org/api/option"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/search"
-	"github.com/aubm/twitter-image/images-api/shared"
-	"cloud.google.com/go/vision"
-	"google.golang.org/api/option"
 )
 
 type Indexer struct {
-	Logger shared.LoggerInterface `inject:""`
-	Config *shared.AppConfig `inject:""`
+	Logger     shared.LoggerInterface `inject:""`
+	Config     *shared.AppConfig      `inject:""`
 	HttpClient interface {
 		Provide(ctx context.Context) *http.Client
 	} `inject:""`

@@ -1,8 +1,8 @@
 package images
 
 import (
-	"google.golang.org/appengine/datastore"
 	"golang.org/x/net/context"
+	"google.golang.org/appengine/datastore"
 )
 
 func buildKeyForImageID(ctx context.Context, imageID string) *datastore.Key {

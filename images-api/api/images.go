@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/aubm/twitter-image/images-api/images"
 	"github.com/aubm/twitter-image/images-api/shared"
+	"github.com/markbates/going/defaults"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/taskqueue"
 )
@@ -26,17 +28,42 @@ type ImagesHandlers struct {
 func (h *ImagesHandlers) List(w http.ResponseWriter, r *http.Request) {
 	ctx := h.Ctx.New(r)
 
-	imagesList, err := h.Finder.Find(ctx, images.FindOptions{
-		Limit:      100,
-		Offset:     0,
-		FilterTags: r.URL.Query().Get("tags"),
-	})
+	findOptions, err := h.buildUserFindOptions(r)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, newError(err.Error()))
+		return
+	}
+
+	imagesList, err := h.Finder.Find(ctx, findOptions)
 	if err != nil {
 		h.Logger.Errorf(ctx, "Call to Manager.Find failed: %v", err)
 		httpError(w, http.StatusInternalServerError, serverError)
 		return
 	}
 	writeJSON(w, imagesList, 200)
+}
+
+func (h *ImagesHandlers) buildUserFindOptions(r *http.Request) (images.FindOptions, error) {
+	findOptions := images.FindOptions{}
+	queryParams := r.URL.Query()
+
+	limitValue := defaults.String(queryParams.Get("limit"), "100")
+	limit, err := strconv.Atoi(limitValue)
+	if err != nil {
+		return findOptions, errors.New(`Invalid value for parameter "limit"`)
+	}
+
+	offsetValue := defaults.String(queryParams.Get("offset"), "0")
+	offset, err := strconv.Atoi(offsetValue)
+	if err != nil {
+		return findOptions, errors.New(`Invalid value for parameter "offset"`)
+	}
+
+	findOptions.Limit = limit
+	findOptions.Offset = offset
+	findOptions.FilterTags = queryParams.Get("tags")
+
+	return findOptions, nil
 }
 
 func (h *ImagesHandlers) Index(w http.ResponseWriter, r *http.Request) {

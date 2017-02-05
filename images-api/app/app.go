@@ -2,8 +2,8 @@ package app
 
 import (
 	"fmt"
-	"os"
 	"net/http"
+	"os"
 
 	"github.com/aubm/twitter-image/images-api/api"
 	"github.com/aubm/twitter-image/images-api/images"

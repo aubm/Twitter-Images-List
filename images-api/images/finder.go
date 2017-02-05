@@ -30,8 +30,10 @@ func (f *Finder) Find(ctx context.Context, options FindOptions) (*FindResult, er
 	}
 
 	return &FindResult{
-		Images: imagesList,
-		Total:  it.Count(),
+		Items:      imagesList,
+		Count:      len(imagesList),
+		Offset:     options.Offset,
+		Total:      it.Count(),
 	}, nil
 }
 
@@ -83,6 +85,9 @@ type FindOptions struct {
 }
 
 type FindResult struct {
-	Images []Image `json:"images"`
-	Total  int     `json:"total"`
+	Items       []Image `json:"items"`
+	MaxPerPage  int     `json:"max_per_page"`
+	Offset      int     `json:"offset"`
+	Count       int     `json:"count"`
+	Total       int     `json:"total"`
 }
