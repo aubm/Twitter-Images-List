@@ -3,11 +3,13 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/aubm/twitter-image/images-api/images"
 	"github.com/aubm/twitter-image/images-api/shared"
 	"golang.org/x/net/context"
+	"google.golang.org/appengine/taskqueue"
 )
 
 type ImagesHandlers struct {
@@ -57,9 +59,48 @@ func (h *ImagesHandlers) Index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, map[string]interface{}{
-		"error": false,
-	}, 200)
+	ok(w)
+}
+
+func (h *ImagesHandlers) QueueIndex(w http.ResponseWriter, r *http.Request) {
+	ctx := h.Ctx.New(r)
+
+	indexRequests := []images.IndexRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&indexRequests); err != nil {
+		httpError(w, http.StatusBadRequest, invalidJSONError)
+		return
+	}
+
+	tasks, err := h.buildTasksFromIndexRequests(indexRequests)
+	if err != nil {
+		h.Logger.Errorf(ctx, "Failed to build tasks from index requests: %v", err)
+		httpError(w, http.StatusInternalServerError, serverError)
+		return
+	}
+
+	if _, err := taskqueue.AddMulti(ctx, tasks, "index-image"); err != nil {
+		h.Logger.Errorf(ctx, "Failed to queue the index of the image: %v", err)
+		httpError(w, http.StatusInternalServerError, serverError)
+		return
+	}
+
+	ok(w)
+}
+
+func (h *ImagesHandlers) buildTasksFromIndexRequests(indexRequests []images.IndexRequest) ([]*taskqueue.Task, error) {
+	tasks := []*taskqueue.Task{}
+	for _, indexReq := range indexRequests {
+		b, err := json.Marshal(indexReq)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to marshal index request to JSON: %v", err)
+		}
+		tasks = append(tasks, &taskqueue.Task{
+			Path:    "/index",
+			Method:  "POST",
+			Payload: b,
+		})
+	}
+	return tasks, nil
 }
 
 func (h *ImagesHandlers) validateIndexRequest(indexRequest images.IndexRequest) error {

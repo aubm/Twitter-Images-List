@@ -28,8 +28,9 @@ func init() {
 	}
 
 	router := mux.NewRouter()
-	router.HandleFunc("/find", imagesHandlers.List).Methods("GET")
+	router.HandleFunc("/", imagesHandlers.List).Methods("GET")
 	router.HandleFunc("/index", imagesHandlers.Index).Methods("POST")
+	router.HandleFunc("/queue-index", imagesHandlers.QueueIndex).Methods("POST")
 	http.Handle("/", router)
 }
 func initConfig() *shared.AppConfig {

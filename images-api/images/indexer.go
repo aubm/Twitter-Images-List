@@ -114,7 +114,6 @@ func (i *Indexer) putToSearchIndex(ctx context.Context, image *Image) error {
 }
 
 type IndexRequest struct {
-	GsUrl       string `json:"gs_url"`
 	Url         string `json:"url"`
 	Description string `json:"description"`
 }

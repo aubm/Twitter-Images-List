@@ -31,6 +31,12 @@ func writeJSON(w http.ResponseWriter, data interface{}, code int) {
 	}
 }
 
+func ok(w http.ResponseWriter) {
+	writeJSON(w, map[string]interface{}{
+		"error": false,
+	}, 200)
+}
+
 func httpError(w http.ResponseWriter, code int, error apiError) {
 	writeJSON(w, error, code)
 }
