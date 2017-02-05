@@ -20,9 +20,10 @@ func init() {
 	logger := &shared.Logger{}
 	httpClientProvider := &shared.HttpClientProvider{}
 	config := initConfig()
+	corsAdapter := &api.CrossDomainAdapter{}
 
 	if err := inject.Populate(
-		imagesHandlers, context, imagesFinder, imagesIndexer, logger, httpClientProvider, config,
+		imagesHandlers, context, imagesFinder, imagesIndexer, logger, httpClientProvider, config, corsAdapter,
 	); err != nil {
 		panic(fmt.Errorf("Failed to populate application graph: %v", err))
 	}
@@ -31,7 +32,8 @@ func init() {
 	router.HandleFunc("/", imagesHandlers.List).Methods("GET")
 	router.HandleFunc("/index", imagesHandlers.Index).Methods("POST")
 	router.HandleFunc("/queue-index", imagesHandlers.QueueIndex).Methods("POST")
-	http.Handle("/", router)
+
+	http.Handle("/", api.Adapt(router, corsAdapter))
 }
 func initConfig() *shared.AppConfig {
 	return &shared.AppConfig{
