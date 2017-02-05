@@ -18,9 +18,7 @@ import (
 
 type Indexer struct {
 	Logger shared.LoggerInterface `inject:""`
-	Config interface {
-		Load(ctx context.Context) *shared.AppConfig
-	} `inject:""`
+	Config *shared.AppConfig `inject:""`
 	HttpClient interface {
 		Provide(ctx context.Context) *http.Client
 	} `inject:""`
@@ -51,7 +49,7 @@ func (i *Indexer) newImageFromIndexRequest(data IndexRequest) *Image {
 }
 
 func (i *Indexer) annotateImageWithTags(ctx context.Context, image *Image) error {
-	visionClient, err := vision.NewClient(ctx, option.WithAPIKey(i.Config.Load(ctx).VisionAPIKey))
+	visionClient, err := vision.NewClient(ctx, option.WithAPIKey(i.Config.VisionAPIKey))
 	if err != nil {
 		return fmt.Errorf("Failed to instanciate the vision client: %v", err)
 	}
