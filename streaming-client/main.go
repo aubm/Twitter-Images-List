@@ -3,11 +3,11 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
 	"os"
 
-	"github.com/ChimeraCoder/anaconda"
+	twitter "github.com/ChimeraCoder/anaconda"
 )
 
 type Config struct {
@@ -19,13 +19,13 @@ type Config struct {
 }
 
 const (
-	INDEX_REQUESTS_BUFFER_MAX_SIZE = 50
+	indexRequestsBufferMaxSize = 50
 )
 
 var (
 	config              = Config{}
-	tweetsToIndex       = make(chan anaconda.Tweet)
-	indexRequestsBuffer = []IndexRequest{}
+	tweetsToIndex       = make(chan twitter.Tweet)
+	indexRequestsBuffer = make([]IndexRequest, 0)
 )
 
 func init() {
@@ -37,54 +37,57 @@ func init() {
 }
 
 func main() {
-	anaconda.SetConsumerKey(config.consumerKey)
-	anaconda.SetConsumerSecret(config.consumerSecret)
-	api := anaconda.NewTwitterApi(config.accessToken, config.accessTokenSecret)
+	twitter.SetConsumerKey(config.consumerKey)
+	twitter.SetConsumerSecret(config.consumerSecret)
+	twitterClient := twitter.NewTwitterApi(config.accessToken, config.accessTokenSecret)
 
-	go func() {
-		for {
-			newTweet := <-tweetsToIndex
-			indexRequestsBuffer = append(indexRequestsBuffer, IndexRequest{
-				Description: newTweet.Text,
-				Url:         newTweet.Entities.Media[0].Media_url,
-			})
-			if len(indexRequestsBuffer) > INDEX_REQUESTS_BUFFER_MAX_SIZE {
-				flushIndexRequestsBuffer()
-			}
-		}
-	}()
+	go listenToTweetsToIndex()
 
-	fmt.Println("Start listening on tweets...")
-	stream := api.PublicStreamSample(nil)
+	log.Print("start listening on tweets...")
+	stream := twitterClient.PublicStreamSample(nil)
 	for {
 		item := <-stream.C
 		switch tweet := item.(type) {
-		case anaconda.Tweet:
+		case twitter.Tweet:
 			inspectTweet(tweet)
 		}
 	}
 }
 
+func listenToTweetsToIndex() {
+	for {
+		newTweet := <-tweetsToIndex
+		indexRequestsBuffer = append(indexRequestsBuffer, IndexRequest{
+			Description: newTweet.Text,
+			Url:         newTweet.Entities.Media[0].Media_url,
+		})
+		if len(indexRequestsBuffer) > indexRequestsBufferMaxSize {
+			flushIndexRequestsBuffer()
+		}
+	}
+}
+
 func flushIndexRequestsBuffer() {
-	fmt.Printf("About to flush %v index requests\n", INDEX_REQUESTS_BUFFER_MAX_SIZE)
+	log.Printf("about to flush %v index requests", indexRequestsBufferMaxSize)
 	defer func() {
 		indexRequestsBuffer = []IndexRequest{}
-		fmt.Println("Flush done")
+		log.Print("flush done")
 	}()
 	b, err := json.Marshal(indexRequestsBuffer)
 	if err != nil {
-		fmt.Printf("Failed to marshal index requests buffer: %v\n", err)
+		log.Printf("failed to marshal index requests buffer: %v", err)
 	}
 	http.Post(config.queueIndexEndpoint, "application/json", bytes.NewReader(b))
 }
 
-func inspectTweet(tweet anaconda.Tweet) {
+func inspectTweet(tweet twitter.Tweet) {
 	tweetMedia := tweet.Entities.Media
 	if len(tweetMedia) < 1 {
 		return
 	}
 
 	if tweetMedia[0].Type == "photo" {
+		log.Printf("indexing new tweet %v", tweet.Id)
 		tweetsToIndex <- tweet
 	}
 }

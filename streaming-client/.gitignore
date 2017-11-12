@@ -1,2 +1,4 @@
-/.idea
-/prerun
+.idea
+prerun.sh
+streaming-client
+streaming-client.exe
