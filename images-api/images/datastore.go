@@ -6,5 +6,5 @@ import (
 )
 
 func buildKeyForImageID(ctx context.Context, imageID string) *datastore.Key {
-	return datastore.NewKey(ctx, DATASTORE_ENTITY_NAME, imageID, 0, nil)
+	return datastore.NewKey(ctx, datastoreEntityName, imageID, 0, nil)
 }

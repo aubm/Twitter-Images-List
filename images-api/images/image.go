@@ -3,8 +3,8 @@ package images
 import "time"
 
 const (
-	DATASTORE_ENTITY_NAME = "Image"
-	SEARCH_INDEX_NAME     = "images"
+	datastoreEntityName = "Image"
+	searchIndexName     = "images_01"
 )
 
 type Image struct {
